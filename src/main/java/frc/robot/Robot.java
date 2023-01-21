@@ -1,22 +1,26 @@
 package frc.robot;
 
-import com.ctre.phoenix.motorcontrol.ControlMode;
-import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
-
+import edu.wpi.first.cameraserver.CameraServer;
+import edu.wpi.first.wpilibj.ADIS16448_IMU;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.NeutralMode;
+import com.ctre.phoenix.motorcontrol.StatusFrameEnhanced;
+import com.ctre.phoenix.motorcontrol.TalonFXFeedbackDevice;
+import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 
 public class Robot extends TimedRobot {
-  private Timer Clock = new Timer();
-  private final XboxController xbox = new XboxController(0);
-
-  private final WPI_TalonFX m_leftMotor = new WPI_TalonFX(2);
-  private final WPI_TalonFX m_external = new WPI_TalonFX(1); 
-  private final WPI_TalonFX m_rightMotor = new WPI_TalonFX(0);
-  private final DifferentialDrive drive = new DifferentialDrive(m_leftMotor, m_rightMotor);
+  private final WPI_TalonFX left = new WPI_TalonFX(2);
+  private final WPI_TalonFX external = new WPI_TalonFX(1); 
+  private final WPI_TalonFX right = new WPI_TalonFX(0);
+  private final DifferentialDrive drive = new DifferentialDrive(left, right);
+  private final XboxController controller = new XboxController(0);
+  private final Timer timer = new Timer();
+  private final ADIS16448_IMU gyro = new ADIS16448_IMU();
  
   @Override
   public void robotInit() {}
@@ -26,36 +30,56 @@ public class Robot extends TimedRobot {
 
   @Override
   public void autonomousInit() {
-    Clock.start();
-    Clock.reset();
-    SmartDashboard.putNumber("Clock", 0);
-    m_external.setSelectedSensorPosition(0, 0, 30);
-    SmartDashboard.putNumber("Encoder", m_external.getSelectedSensorPosition(0));
+    initialize();
   }
 
   @Override
   public void autonomousPeriodic() {
+    double time = timer.get();
+    double positionExternal = external.getSelectedSensorPosition(0);
+    double positionLeft = left.getSelectedSensorPosition(0);
+    double positionRight = right.getSelectedSensorPosition(0);
+    double angle = gyro.getGyroAngleZ();
+
+    SmartDashboard.putNumber("Clock",  time);
+    SmartDashboard.putNumber("Encoder (External)", positionExternal);
+    SmartDashboard.putNumber("Encoder (Left)", positionLeft);
+    SmartDashboard.putNumber("Encoder (Right)", positionRight);
+    SmartDashboard.putNumber("Angle", angle);
 
     drive.arcadeDrive(0,0);
-    double time = Clock.get();
-    SmartDashboard.putNumber("Clock",  time);
+
     if (time < 2) {
-      m_external.set(ControlMode.PercentOutput, 0.1);
+      external.set(ControlMode.PercentOutput, 0.1);
     } 
     if (time > 2) {
-      m_external.set(ControlMode.PercentOutput, 0);
+      external.set(ControlMode.PercentOutput, 0);
     }
-    SmartDashboard.putNumber("Encoder", m_external.getSelectedSensorPosition(0));
   }
 
   @Override
-  public void teleopInit() {}
+  public void teleopInit() {
+    initialize();
+  }
 
   @Override
   public void teleopPeriodic() {
-    double leftStickY = xbox.getLeftY();
-    double leftStickX = xbox.getLeftX();
-    drive.arcadeDrive(leftStickX, leftStickY);
+
+    double leftStickY = controller.getLeftY();
+    double leftStickX = controller.getLeftX();
+    double positionExternal = external.getSelectedSensorPosition(0);
+    double positionLeft = left.getSelectedSensorPosition(0);
+    double positionRight = right.getSelectedSensorPosition(0);
+    double angle = gyro.getGyroAngleZ();
+
+    SmartDashboard.putNumber("leftStickY", leftStickY);
+    SmartDashboard.putNumber("leftStickX", leftStickX);
+    SmartDashboard.putNumber("Encoder (External)", positionExternal);
+    SmartDashboard.putNumber("Encoder (Left)", positionLeft);
+    SmartDashboard.putNumber("Encoder (Right)", positionRight);
+    SmartDashboard.putNumber("Angle", angle);
+
+    drive.arcadeDrive(leftStickX, leftStickY, true);
   }
 
   @Override
@@ -75,4 +99,61 @@ public class Robot extends TimedRobot {
 
   @Override
   public void simulationPeriodic() {}
+
+  public void motorStartUp(WPI_TalonFX motor) {
+    motor.configFactoryDefault();
+    motor.configSelectedFeedbackSensor(TalonFXFeedbackDevice.IntegratedSensor, 0 , 30);
+    motor.configNeutralDeadband(0.01, 30);
+    motor.setSensorPhase(false);
+    motor.setInverted(false);
+    motor.setStatusFramePeriod(StatusFrameEnhanced.Status_13_Base_PIDF0, 10, 30);
+    motor.setStatusFramePeriod(StatusFrameEnhanced.Status_10_MotionMagic, 10, 30);
+    motor.configNominalOutputForward(0, 30);
+    motor.configNominalOutputReverse(0, 30);
+    motor.configPeakOutputForward(1, 30);
+    motor.configPeakOutputReverse(-1, 30);
+    motor.selectProfileSlot(0, 0);
+    motor.setSelectedSensorPosition(0, 0, 30);
+  }
+
+  public void initialize() {
+    motorStartUp(external);
+    external.config_kF(0, 0, 30);
+    external.config_kP(0, 1, 30);
+    external.config_kI(0, 0.005, 30);
+    external.config_kD(0, 10, 30);
+    external.configMotionCruiseVelocity(20000, 30);
+    external.configMotionAcceleration(6000, 30);
+    external.setNeutralMode(NeutralMode.Brake);
+
+    motorStartUp(left);
+    left.config_kF(0, 0, 30);
+    left.config_kP(0, 1, 30);
+    left.config_kI(0, 0.005, 30);
+    left.config_kD(0, 10, 30);
+    left.configMotionCruiseVelocity(20000, 30);
+    left.configMotionAcceleration(6000, 30);
+    left.setNeutralMode(NeutralMode.Brake);
+
+    motorStartUp(right);
+    right.config_kF(0, 0, 30);
+    right.config_kP(0, 1, 30);
+    right.config_kI(0, 0.005, 30);
+    right.config_kD(0, 10, 30);
+    right.configMotionCruiseVelocity(20000, 30);
+    right.configMotionAcceleration(6000, 30);
+    right.setNeutralMode(NeutralMode.Brake);
+
+
+    gyro.calibrate();
+    timer.start();
+    timer.reset();
+    CameraServer.startAutomaticCapture();
+
+    SmartDashboard.putNumber("Angle", gyro.getGyroAngleZ());
+    SmartDashboard.putNumber("Time", timer.get());
+    SmartDashboard.putNumber("Encoder (External)", external.getSelectedSensorPosition(0));
+    SmartDashboard.putNumber("Encoder (Left)", left.getSelectedSensorPosition(0));
+    SmartDashboard.putNumber("Encoder (Right)", right.getSelectedSensorPosition(0));
+  }
 }
