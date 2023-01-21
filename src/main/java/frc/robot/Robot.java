@@ -14,13 +14,13 @@ import com.ctre.phoenix.motorcontrol.TalonFXFeedbackDevice;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 
 public class Robot extends TimedRobot {
-  private final WPI_TalonFX left = new WPI_TalonFX(2);
-  private final WPI_TalonFX external = new WPI_TalonFX(1); 
-  private final WPI_TalonFX right = new WPI_TalonFX(0);
+  private final WPI_TalonFX left = new WPI_TalonFX(2); // left drive motor
+  private final WPI_TalonFX external = new WPI_TalonFX(1); // external motor
+  private final WPI_TalonFX right = new WPI_TalonFX(0); // right drive motor
   private final DifferentialDrive drive = new DifferentialDrive(left, right);
   private final XboxController controller = new XboxController(0);
-  private final Timer timer = new Timer();
-  private final ADIS16448_IMU gyro = new ADIS16448_IMU();
+  private final Timer timer = new Timer(); 
+  private final ADIS16448_IMU gyro = new ADIS16448_IMU(); // RoboRIO-mounted gyroscope
  
   @Override
   public void robotInit() {}
@@ -35,20 +35,24 @@ public class Robot extends TimedRobot {
 
   @Override
   public void autonomousPeriodic() {
+    // updates variables
     double time = timer.get();
     double positionExternal = external.getSelectedSensorPosition(0);
     double positionLeft = left.getSelectedSensorPosition(0);
     double positionRight = right.getSelectedSensorPosition(0);
     double angle = gyro.getGyroAngleZ();
 
+    // publishes updated variables to the dashboard
     SmartDashboard.putNumber("Clock",  time);
     SmartDashboard.putNumber("Encoder (External)", positionExternal);
     SmartDashboard.putNumber("Encoder (Left)", positionLeft);
     SmartDashboard.putNumber("Encoder (Right)", positionRight);
     SmartDashboard.putNumber("Angle", angle);
-
+    
+    // sets drive motors
     drive.arcadeDrive(0,0);
-
+    
+    // runs the external motor at 10% for 2 seconds
     if (time < 2) {
       external.set(ControlMode.PercentOutput, 0.1);
     } 
@@ -64,21 +68,23 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopPeriodic() {
-
+    // updates variables
     double leftStickY = controller.getLeftY();
     double leftStickX = controller.getLeftX();
     double positionExternal = external.getSelectedSensorPosition(0);
     double positionLeft = left.getSelectedSensorPosition(0);
     double positionRight = right.getSelectedSensorPosition(0);
     double angle = gyro.getGyroAngleZ();
-
+    
+    // publishes updated variables to the dashboard
     SmartDashboard.putNumber("leftStickY", leftStickY);
     SmartDashboard.putNumber("leftStickX", leftStickX);
     SmartDashboard.putNumber("Encoder (External)", positionExternal);
     SmartDashboard.putNumber("Encoder (Left)", positionLeft);
     SmartDashboard.putNumber("Encoder (Right)", positionRight);
     SmartDashboard.putNumber("Angle", angle);
-
+    
+    // sets the drive motors based on the left joystick inputs
     drive.arcadeDrive(leftStickX, leftStickY, true);
   }
 
@@ -100,6 +106,7 @@ public class Robot extends TimedRobot {
   @Override
   public void simulationPeriodic() {}
 
+  // runs manufacturer recommended startup commands for Falcon 500 motors. Should be run at startup for all motors.
   public void motorStartUp(WPI_TalonFX motor) {
     motor.configFactoryDefault();
     motor.configSelectedFeedbackSensor(TalonFXFeedbackDevice.IntegratedSensor, 0 , 30);
@@ -118,13 +125,19 @@ public class Robot extends TimedRobot {
 
   public void initialize() {
     motorStartUp(external);
-    external.config_kF(0, 0, 30);
+
+    // PID coefficients 
+    external.config_kF(0, 0, 30); 
     external.config_kP(0, 1, 30);
     external.config_kI(0, 0.005, 30);
     external.config_kD(0, 10, 30);
+
+    // motion magic parameters
     external.configMotionCruiseVelocity(20000, 30);
     external.configMotionAcceleration(6000, 30);
-    external.setNeutralMode(NeutralMode.Brake);
+
+    // brake versus coast
+    external.setNeutralMode(NeutralMode.Brake); 
 
     motorStartUp(left);
     left.config_kF(0, 0, 30);
@@ -144,12 +157,12 @@ public class Robot extends TimedRobot {
     right.configMotionAcceleration(6000, 30);
     right.setNeutralMode(NeutralMode.Brake);
 
-
-    gyro.calibrate();
+    gyro.calibrate(); // sets the gyro angle to 0 based on the current robot position
     timer.start();
-    timer.reset();
-    CameraServer.startAutomaticCapture();
+    timer.reset(); // sets the timer to 0
+    CameraServer.startAutomaticCapture(); // starts the webcam stream
 
+    // initializes values on dashboard
     SmartDashboard.putNumber("Angle", gyro.getGyroAngleZ());
     SmartDashboard.putNumber("Time", timer.get());
     SmartDashboard.putNumber("Encoder (External)", external.getSelectedSensorPosition(0));
