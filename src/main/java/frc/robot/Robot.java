@@ -48,18 +48,15 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("Encoder (Left)", positionLeft);
     SmartDashboard.putNumber("Encoder (Right)", positionRight);
     SmartDashboard.putNumber("Angle", angle);
-    
-    // sets drive motors
-    drive.arcadeDrive(0,0);
-    
-    // runs the external motor at 10% for 2 seconds
-    if (time < 2) {
-      external.set(ControlMode.PercentOutput, 0.1);
-    } 
-    if (time > 2) {
-      external.set(ControlMode.PercentOutput, 0);
+   
+    // runs the drive motor at 10% for 2 seconds
+      if (time < 2) {
+        drive.arcadeDrive(0.1, 0);
+      } 
+      if (time > 2) {
+        drive.arcadeDrive(0, 0);
+      }
     }
-  }
 
   @Override
   public void teleopInit() {
