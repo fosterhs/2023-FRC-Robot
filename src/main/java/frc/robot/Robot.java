@@ -49,12 +49,12 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("Encoder (Right)", positionRight);
     SmartDashboard.putNumber("Angle", angle);
    
-    // runs the drive motor at 10% for 2 seconds
-      if (time < 2) {
-        drive.arcadeDrive(0.1, 0);
-      } 
-      if (time > 2) {
+       // runs the external motor at 50% until one motor rotation
+      if (positionExternal >= 55578) {
         drive.arcadeDrive(0, 0);
+      } 
+      if (positionExternal < 55578) {
+        drive.arcadeDrive(0, -0.5);
       }
     }
 
