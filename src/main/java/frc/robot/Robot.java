@@ -12,14 +12,11 @@ import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.StatusFrameEnhanced;
 import com.ctre.phoenix.motorcontrol.TalonFXFeedbackDevice;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
-import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 
 public class Robot extends TimedRobot {
   private final WPI_TalonFX left = new WPI_TalonFX(2); // left drive motor
   private final WPI_TalonFX external = new WPI_TalonFX(1); // external motor
   private final WPI_TalonFX right = new WPI_TalonFX(0); // right drive motor
-  private final WPI_VictorSPX intake = new WPI_VictorSPX(2); // intake motor
-  private final WPI_VictorSPX belt = new WPI_VictorSPX(4); // belt motor
   private final DifferentialDrive drive = new DifferentialDrive(left, right);
   private final XboxController controller = new XboxController(0);
   private final Timer timer = new Timer(); 
@@ -42,7 +39,7 @@ public class Robot extends TimedRobot {
     double time = timer.get();
     double positionExternal = external.getSelectedSensorPosition(0);
     double positionLeft = left.getSelectedSensorPosition(0);
-    double positionRight = -right.getSelectedSensorPosition(0);
+    double positionRight = right.getSelectedSensorPosition(0);
     double angle = gyro.getGyroAngleZ();
 
     // publishes updated variables to the dashboard
@@ -52,11 +49,12 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("Encoder (Right)", positionRight);
     SmartDashboard.putNumber("Angle", angle);
    
-    // runs the external motor at 50% until one motor rotation
-    if (positionLeft < 45315.0 ) {
-      drive.arcadeDrive(0, -0.25);
-      } else {
-      drive.arcadeDrive(0, 0);
+       // runs the external motor at 50% until one motor rotation
+      if (positionExternal >= 55578) {
+        drive.arcadeDrive(0, 0);
+      } 
+      if (positionExternal < 55578) {
+        drive.arcadeDrive(0, -0.5);
       }
     }
 
@@ -70,22 +68,14 @@ public class Robot extends TimedRobot {
     // updates variables
     double leftStickY = controller.getLeftY();
     double leftStickX = controller.getLeftX();
-    double rightTrigger = controller.getRightTriggerAxis();
-    double leftTrigger = controller.getLeftTriggerAxis();
-    double rightStickY = controller.getRightY();
-    double rightStickX = controller.getRightX();
     double positionExternal = external.getSelectedSensorPosition(0);
     double positionLeft = left.getSelectedSensorPosition(0);
-    double positionRight = -right.getSelectedSensorPosition(0);
+    double positionRight = right.getSelectedSensorPosition(0);
     double angle = gyro.getGyroAngleZ();
     
     // publishes updated variables to the dashboard
     SmartDashboard.putNumber("leftStickY", leftStickY);
     SmartDashboard.putNumber("leftStickX", leftStickX);
-    SmartDashboard.putNumber("rightStickY", rightStickY);
-    SmartDashboard.putNumber("rightStickX", rightStickX);
-    SmartDashboard.putNumber("rightTrigger", rightTrigger);
-    SmartDashboard.putNumber("leftTrigger", leftTrigger);
     SmartDashboard.putNumber("Encoder (External)", positionExternal);
     SmartDashboard.putNumber("Encoder (Left)", positionLeft);
     SmartDashboard.putNumber("Encoder (Right)", positionRight);
@@ -93,9 +83,6 @@ public class Robot extends TimedRobot {
     
     // sets the drive motors based on the left joystick inputs
     drive.arcadeDrive(leftStickX, leftStickY, true);
-    belt.set(-rightTrigger);
-    intake.set(-leftTrigger);
-    external.set(ControlMode.Position, 2048*rightStickY);
   }
 
   @Override
@@ -174,7 +161,7 @@ public class Robot extends TimedRobot {
 
     // initializes values on dashboard
     SmartDashboard.putNumber("Angle", gyro.getGyroAngleZ());
-    SmartDashboard.putNumber("Clock", timer.get());
+    SmartDashboard.putNumber("Time", timer.get());
     SmartDashboard.putNumber("Encoder (External)", external.getSelectedSensorPosition(0));
     SmartDashboard.putNumber("Encoder (Left)", left.getSelectedSensorPosition(0));
     SmartDashboard.putNumber("Encoder (Right)", right.getSelectedSensorPosition(0));
