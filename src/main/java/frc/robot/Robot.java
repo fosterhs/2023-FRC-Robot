@@ -130,6 +130,7 @@ public class Robot extends TimedRobot {
     motor.configPeakOutputForward(1, 30);
     motor.configPeakOutputReverse(-1, 30);
     motor.selectProfileSlot(0, 0);
+    motor.configOpenloopRamp(1);
     motor.setSelectedSensorPosition(0, 0, 30);
   }
 
