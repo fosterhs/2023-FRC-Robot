@@ -78,7 +78,7 @@ public class Robot extends TimedRobot {
     double rightStickX = controller.getRightX();
     double positionBelt = belt.getSelectedSensorPosition(0);
     double positionLeft = left.getSelectedSensorPosition(0);
-    double positionRight = -right.getSelectedSensorPosition(0);
+    double positionRight = right.getSelectedSensorPosition(0);
     double positionInternalIntake = intakeInternal.getSelectedSensorPosition(0);
     double positionExternalIntake = intakeExternal.getSelectedSensorPosition(0);
     double angle = gyro.getGyroAngleZ();
@@ -136,6 +136,7 @@ public class Robot extends TimedRobot {
     motor.configPeakOutputForward(1, 30);
     motor.configPeakOutputReverse(-1, 30);
     motor.selectProfileSlot(0, 0);
+    motor.configOpenloopRamp(1);
     motor.setSelectedSensorPosition(0, 0, 30);
   }
 
