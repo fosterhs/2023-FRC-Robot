@@ -42,7 +42,7 @@ public class Robot extends TimedRobot {
     double time = timer.get();
     double positionExternal = external.getSelectedSensorPosition(0);
     double positionLeft = left.getSelectedSensorPosition(0);
-    double positionRight = -right.getSelectedSensorPosition(0);
+    double positionRight = right.getSelectedSensorPosition(0);
     double angle = gyro.getGyroAngleZ();
 
     // publishes updated variables to the dashboard
@@ -54,7 +54,7 @@ public class Robot extends TimedRobot {
    
     // runs the external motor at 50% until one motor rotation
     if (positionLeft < 45315.0 ) {
-      drive.arcadeDrive(0, -0.25);
+      drive.arcadeDrive(0.25, 0);
       } else {
       drive.arcadeDrive(0, 0);
       }
@@ -76,7 +76,7 @@ public class Robot extends TimedRobot {
     double rightStickX = controller.getRightX();
     double positionExternal = external.getSelectedSensorPosition(0);
     double positionLeft = left.getSelectedSensorPosition(0);
-    double positionRight = -right.getSelectedSensorPosition(0);
+    double positionRight = right.getSelectedSensorPosition(0);
     double angle = gyro.getGyroAngleZ();
     
     // publishes updated variables to the dashboard
@@ -92,7 +92,7 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("Angle", angle);
     
     // sets the drive motors based on the left joystick inputs
-    drive.arcadeDrive(leftStickX, leftStickY, true);
+    drive.arcadeDrive(-leftStickY, -leftStickX, true);
     belt.set(-rightTrigger);
     intake.set(-leftTrigger);
     external.set(ControlMode.Position, 2048*rightStickY);
@@ -166,6 +166,7 @@ public class Robot extends TimedRobot {
     right.configMotionCruiseVelocity(20000, 30);
     right.configMotionAcceleration(6000, 30);
     right.setNeutralMode(NeutralMode.Brake);
+    right.setInverted(true);
 
     gyro.calibrate(); // sets the gyro angle to 0 based on the current robot position
     timer.start();
