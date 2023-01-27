@@ -42,7 +42,6 @@ public class Robot extends TimedRobot {
       drive.arcadeDrive(0,0);
     }
   }
-  }
 
   @Override
   public void autonomousPeriodic() {
