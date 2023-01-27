@@ -55,8 +55,8 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("Angle", angle);
    
     // runs the drive motors at 25% until the robot has traveled 1 meter
-    if (positionLeft < 45315.0 ) {
-      drive.arcadeDrive(0.25,0);
+    if (angle < 89) {
+      drive.arcadeDrive(0,-0.25);
     } else {
       drive.arcadeDrive(0,0);
     }
