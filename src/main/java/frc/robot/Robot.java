@@ -65,6 +65,7 @@ public class Robot extends TimedRobot {
   @Override
   public void autonomousPeriodic() {
     double matchTime = elapsedTime.get();
+    SmartDashboard.putNumber("Match Time:", matchTime);
     if (matchTime < 4) {
       m_leftMotor.set(ControlMode.PercentOutput, 0.1);
       m_rightMotor.set(ControlMode.PercentOutput, -0.1);
