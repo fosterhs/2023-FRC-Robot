@@ -14,17 +14,19 @@ import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 
 public class Robot extends TimedRobot {
   private final WPI_TalonFX left = new WPI_TalonFX(2); // left drive motor
-  private final WPI_TalonFX belt = new WPI_TalonFX(1); // belt motor
   private final WPI_TalonFX right = new WPI_TalonFX(0); // right drive motor
-  private final WPI_TalonFX intakeInternal = new WPI_TalonFX(3); // intake motor
-  private final WPI_TalonFX intakeExternal = new WPI_TalonFX(4); // belt motor
+  private final WPI_TalonFX belt = new WPI_TalonFX(1); // belt motor
+  private final WPI_TalonFX intakeInternal = new WPI_TalonFX(3); // internal intake motor
+  private final WPI_TalonFX intakeExternal = new WPI_TalonFX(4); // external intake motor
   private final DifferentialDrive drive = new DifferentialDrive(left, right);
   private final XboxController controller = new XboxController(0);
   private final Timer timer = new Timer(); 
   private final ADIS16448_IMU gyro = new ADIS16448_IMU(); // RoboRIO-mounted gyroscope
- 
+
   @Override
-  public void robotInit() {}
+  public void robotInit() {
+    CameraServer.startAutomaticCapture(); // starts the webcam stream
+  }
 
   @Override
   public void robotPeriodic() {}
@@ -34,39 +36,39 @@ public class Robot extends TimedRobot {
     initialize();
   }
 
-  // Move function unit for distance in meters
-  public void moveDistance(double distance, double speed, double position) {
-    if (position < 45315.0 * distance) {
-      drive.arcadeDrive(speed, 0);
-    } else {
-      drive.arcadeDrive(0,0);
-    }
-  }
-
   @Override
   public void autonomousPeriodic() {
     // updates variables
-    double time = timer.get();
-    double positionBelt = belt.getSelectedSensorPosition(0);
     double positionLeft = left.getSelectedSensorPosition(0);
+    double positionRight = right.getSelectedSensorPosition(0);
+    double positionBelt = belt.getSelectedSensorPosition(0);
     double positionInternalIntake = intakeInternal.getSelectedSensorPosition(0);
     double positionExternalIntake = intakeExternal.getSelectedSensorPosition(0);
-    double positionRight = right.getSelectedSensorPosition(0);
+    double time = timer.get();
     double angle = gyro.getGyroAngleZ();
 
     // publishes updated variables to the dashboard
-    SmartDashboard.putNumber("Clock",  time);
-    SmartDashboard.putNumber("Encoder (Belt)", positionBelt);
     SmartDashboard.putNumber("Encoder (Left)", positionLeft);
     SmartDashboard.putNumber("Encoder (Right)", positionRight);
+    SmartDashboard.putNumber("Encoder (Belt)", positionBelt);
     SmartDashboard.putNumber("Encoder (External Intake)", positionExternalIntake);
     SmartDashboard.putNumber("Encoder (Internal Intake)", positionInternalIntake);
+    SmartDashboard.putNumber("Clock",  time);
     SmartDashboard.putNumber("Angle", angle);
    
     // runs the drive motors at 25% until the robot has traveled 1 meter
     moveDistance(1, 0.25, positionLeft);
   }
 
+    // Move function unit for distance in meters
+  public void moveDistance(double distance, double speed, double position) {
+    if (position < 45315.0 * distance) {
+     drive.arcadeDrive(speed, 0);
+    } else {
+     drive.arcadeDrive(0,0);
+    }
+  }
+  
   @Override
   public void teleopInit() {
     initialize();
@@ -77,15 +79,16 @@ public class Robot extends TimedRobot {
     // updates variables
     double leftStickY = controller.getLeftY();
     double leftStickX = controller.getLeftX();
-    double rightTrigger = controller.getRightTriggerAxis();
-    double leftTrigger = controller.getLeftTriggerAxis();
     double rightStickY = controller.getRightY();
     double rightStickX = controller.getRightX();
-    double positionBelt = belt.getSelectedSensorPosition(0);
+    double leftTrigger = controller.getLeftTriggerAxis();
+    double rightTrigger = controller.getRightTriggerAxis();
     double positionLeft = left.getSelectedSensorPosition(0);
     double positionRight = right.getSelectedSensorPosition(0);
+    double positionBelt = belt.getSelectedSensorPosition(0);
     double positionInternalIntake = intakeInternal.getSelectedSensorPosition(0);
     double positionExternalIntake = intakeExternal.getSelectedSensorPosition(0);
+    double time = timer.get();
     double angle = gyro.getGyroAngleZ();
     
     // publishes updated variables to the dashboard
@@ -95,11 +98,12 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("rightStickX", rightStickX);
     SmartDashboard.putNumber("rightTrigger", rightTrigger);
     SmartDashboard.putNumber("leftTrigger", leftTrigger);
-    SmartDashboard.putNumber("Encoder (Belt)", positionBelt);
     SmartDashboard.putNumber("Encoder (Left)", positionLeft);
     SmartDashboard.putNumber("Encoder (Right)", positionRight);
+    SmartDashboard.putNumber("Encoder (Belt)", positionBelt);
     SmartDashboard.putNumber("Encoder (External Intake)", positionExternalIntake);
     SmartDashboard.putNumber("Encoder (Internal Intake)", positionInternalIntake);
+    SmartDashboard.putNumber("Clock",  time);
     SmartDashboard.putNumber("Angle", angle);
     
     // sets the drive motors based on the left joystick inputs
@@ -146,28 +150,16 @@ public class Robot extends TimedRobot {
   }
 
   public void initialize() {
-    motorStartUp(belt);
-
-    // PID coefficients 
-    belt.config_kF(0, 0, 30); 
-    belt.config_kP(0, 1, 30);
-    belt.config_kI(0, 0.005, 30);
-    belt.config_kD(0, 10, 30);
-
-    // motion magic parameters
-    belt.configMotionCruiseVelocity(20000, 30);
-    belt.configMotionAcceleration(6000, 30);
-
-    // brake versus coast
-    belt.setNeutralMode(NeutralMode.Brake); 
-
     motorStartUp(left);
+    //PID coefficients
     left.config_kF(0, 0, 30);
     left.config_kP(0, 1, 30);
     left.config_kI(0, 0.005, 30);
     left.config_kD(0, 10, 30);
+    // motion magic parameters
     left.configMotionCruiseVelocity(20000, 30);
     left.configMotionAcceleration(6000, 30);
+    // brake vs coast
     left.setNeutralMode(NeutralMode.Brake);
 
     motorStartUp(right);
@@ -180,14 +172,14 @@ public class Robot extends TimedRobot {
     right.setNeutralMode(NeutralMode.Brake);
     right.setInverted(true);
 
-    motorStartUp(intakeExternal);
-    intakeExternal.config_kF(0, 0, 30);
-    intakeExternal.config_kP(0, 1, 30);
-    intakeExternal.config_kI(0, 0.005, 30);
-    intakeExternal.config_kD(0, 10, 30);
-    intakeExternal.configMotionCruiseVelocity(20000, 30);
-    intakeExternal.configMotionAcceleration(6000, 30);
-    intakeExternal.setNeutralMode(NeutralMode.Brake);
+    motorStartUp(belt);
+    belt.config_kF(0, 0, 30); 
+    belt.config_kP(0, 1, 30);
+    belt.config_kI(0, 0.005, 30);
+    belt.config_kD(0, 10, 30);
+    belt.configMotionCruiseVelocity(20000, 30);
+    belt.configMotionAcceleration(6000, 30);
+    belt.setNeutralMode(NeutralMode.Brake); 
 
     motorStartUp(intakeInternal);
     intakeInternal.config_kF(0, 0, 30);
@@ -198,18 +190,26 @@ public class Robot extends TimedRobot {
     intakeInternal.configMotionAcceleration(6000, 30);
     intakeInternal.setNeutralMode(NeutralMode.Brake);
 
-    gyro.calibrate(); // sets the gyro angle to 0 based on the current robot position
+    motorStartUp(intakeExternal);
+    intakeExternal.config_kF(0, 0, 30);
+    intakeExternal.config_kP(0, 1, 30);
+    intakeExternal.config_kI(0, 0.005, 30);
+    intakeExternal.config_kD(0, 10, 30);
+    intakeExternal.configMotionCruiseVelocity(20000, 30);
+    intakeExternal.configMotionAcceleration(6000, 30);
+    intakeExternal.setNeutralMode(NeutralMode.Brake);
+
     timer.start();
     timer.reset(); // sets the timer to 0
-    CameraServer.startAutomaticCapture(); // starts the webcam stream
+    gyro.calibrate(); // sets the gyro angle to 0 based on the current robot position
 
     // initializes values on dashboard
-    SmartDashboard.putNumber("Angle", gyro.getGyroAngleZ());
-    SmartDashboard.putNumber("Clock", timer.get());
-    SmartDashboard.putNumber("Encoder (Belt)", belt.getSelectedSensorPosition(0));
     SmartDashboard.putNumber("Encoder (Left)", left.getSelectedSensorPosition(0));
     SmartDashboard.putNumber("Encoder (Right)", right.getSelectedSensorPosition(0));
-    SmartDashboard.putNumber("Encoder (External Intake)", intakeExternal.getSelectedSensorPosition(0));
+    SmartDashboard.putNumber("Encoder (Belt)", belt.getSelectedSensorPosition(0));
     SmartDashboard.putNumber("Encoder (Internal Intake)", intakeInternal.getSelectedSensorPosition(0));
+    SmartDashboard.putNumber("Encoder (External Intake)", intakeExternal.getSelectedSensorPosition(0));
+    SmartDashboard.putNumber("Clock", timer.get());
+    SmartDashboard.putNumber("Angle", gyro.getGyroAngleZ());
   }
 }
