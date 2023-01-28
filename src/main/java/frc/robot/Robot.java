@@ -60,7 +60,7 @@ public class Robot extends TimedRobot {
     moveDistance(1, 0.25, positionLeft);
   }
 
-    // Move function unit for distance in meters
+    // Move function unit for distance in meters; Bug - Moving two meters won't work because distance is not reset
   public void moveDistance(double distance, double speed, double position) {
     if (position < 45315.0 * distance) {
      drive.arcadeDrive(speed, 0);
@@ -69,6 +69,15 @@ public class Robot extends TimedRobot {
     }
   }
   
+  // Same bug as move function
+  public void rotate(double desiredAngle, double speed, double angle) {
+    if (angle < desiredAngle + 1) {
+     drive.arcadeDrive(0, speed);
+    } else {
+     drive.arcadeDrive(0,0);
+    }
+  }
+
   @Override
   public void teleopInit() {
     initialize();
