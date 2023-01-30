@@ -1,6 +1,10 @@
 package frc.robot;
 
 import edu.wpi.first.cameraserver.CameraServer;
+import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
 import edu.wpi.first.wpilibj.ADIS16448_IMU;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
@@ -13,15 +17,22 @@ import com.ctre.phoenix.motorcontrol.TalonFXFeedbackDevice;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 
 public class Robot extends TimedRobot {
-  private final WPI_TalonFX left = new WPI_TalonFX(2); // left drive motor
-  private final WPI_TalonFX right = new WPI_TalonFX(0); // right drive motor
-  private final WPI_TalonFX belt = new WPI_TalonFX(1); // belt motor
-  private final WPI_TalonFX intakeInternal = new WPI_TalonFX(3); // internal intake motor
-  private final WPI_TalonFX intakeExternal = new WPI_TalonFX(4); // external intake motor
-  private final DifferentialDrive drive = new DifferentialDrive(left, right);
-  private final XboxController controller = new XboxController(0);
-  private final Timer timer = new Timer(); 
-  private final ADIS16448_IMU gyro = new ADIS16448_IMU(); // RoboRIO-mounted gyroscope
+  WPI_TalonFX left = new WPI_TalonFX(2); // left drive motor
+  WPI_TalonFX right = new WPI_TalonFX(0); // right drive motor
+  WPI_TalonFX belt = new WPI_TalonFX(1); // belt motor
+  WPI_TalonFX intakeInternal = new WPI_TalonFX(3); // internal intake motor
+  WPI_TalonFX intakeExternal = new WPI_TalonFX(4); // external intake motor
+  DifferentialDrive drive = new DifferentialDrive(left, right);
+  XboxController controller = new XboxController(0);
+  Timer timer = new Timer(); 
+  ADIS16448_IMU gyro = new ADIS16448_IMU(); // RoboRIO-mounted gyroscope
+  DifferentialDriveOdometry odometry;
+  double encoderTicksPerMeter = 44000;
+  PIDController positionControl = new PIDController(0, 0, 0);
+  PIDController angleControl = new PIDController(0, 0, 0);
+  double desiredRobotPosition = 0;
+  double desiredRobotAngle = 0;
+  int autoStage = 1;
   // controller inputs
   double leftStickY;
   double leftStickX;
@@ -35,14 +46,25 @@ public class Robot extends TimedRobot {
   double positionBelt;
   double positionInternalIntake;
   double positionExternalIntake;
+  double positionAverage;
   // match time
   double time;
   // gyro angle
   double angle;
+  double robotX;
+  double robotY;
 
   @Override
   public void robotInit() {
-    initialize();
+    initializeMotors();
+    timer.start();
+    timer.reset(); // sets the timer to 0
+    gyro.calibrate(); // sets the gyro angle to 0 based on the current robot position
+    CameraServer.startAutomaticCapture(); // starts the webcam stream
+    updateVariables();
+    odometry = new DifferentialDriveOdometry(new Rotation2d(angle*Math.PI/180), positionLeft, positionRight);
+    positionControl.setTolerance(100);
+    angleControl.setTolerance(2);
   }
 
   @Override
@@ -57,6 +79,46 @@ public class Robot extends TimedRobot {
   @Override
   public void autonomousPeriodic() {
     updateVariables();
+
+    if (autoStage > 4) {
+      autoStage = 1;
+    } 
+
+    if (autoStage == 1) {
+      desiredRobotPosition = positionAverage + encoderTicksPerMeter;
+      moveToPosition(desiredRobotPosition);
+      autoStage++;
+    } 
+    
+    else if (autoStage == 2) {
+      moveToPosition(desiredRobotPosition);
+      if (positionControl.atSetpoint()) {
+        autoStage++;
+      }
+    } 
+    
+    else if (autoStage == 3) {
+      desiredRobotAngle = desiredRobotAngle + 90;
+      rotateToAngle(desiredRobotAngle);
+      autoStage++;
+    } 
+    
+    else if (autoStage == 4) {
+      rotateToAngle(desiredRobotAngle);
+      if (angleControl.atSetpoint()) {
+        autoStage++;
+      }
+    }
+  }
+  
+  public void moveToPosition(double distance) {
+    double xSpeed = positionControl.calculate(positionAverage, desiredRobotPosition);
+    drive.arcadeDrive(xSpeed, 0);
+  }
+
+  public void rotateToAngle(double angle) {
+    double zRotation = angleControl.calculate(angle, desiredRobotAngle);
+    drive.arcadeDrive(0, zRotation);
   }
 
   @Override
@@ -94,8 +156,8 @@ public class Robot extends TimedRobot {
   @Override
   public void simulationPeriodic() {}
 
-  public void initialize() {
-    motorStartUp(left);
+  public void initializeMotors() {
+    motorConfig(left);
     //PID coefficients
     left.config_kF(0, 0, 30);
     left.config_kP(0, 1, 30);
@@ -107,7 +169,7 @@ public class Robot extends TimedRobot {
     // brake vs coast
     left.setNeutralMode(NeutralMode.Brake);
 
-    motorStartUp(right);
+    motorConfig(right);
     right.config_kF(0, 0, 30);
     right.config_kP(0, 1, 30);
     right.config_kI(0, 0.005, 30);
@@ -117,7 +179,7 @@ public class Robot extends TimedRobot {
     right.setNeutralMode(NeutralMode.Brake);
     right.setInverted(true);
 
-    motorStartUp(belt);
+    motorConfig(belt);
     belt.config_kF(0, 0, 30); 
     belt.config_kP(0, 1, 30);
     belt.config_kI(0, 0.005, 30);
@@ -126,7 +188,7 @@ public class Robot extends TimedRobot {
     belt.configMotionAcceleration(6000, 30);
     belt.setNeutralMode(NeutralMode.Brake); 
 
-    motorStartUp(intakeInternal);
+    motorConfig(intakeInternal);
     intakeInternal.config_kF(0, 0, 30);
     intakeInternal.config_kP(0, 1, 30);
     intakeInternal.config_kI(0, 0.005, 30);
@@ -135,7 +197,7 @@ public class Robot extends TimedRobot {
     intakeInternal.configMotionAcceleration(6000, 30);
     intakeInternal.setNeutralMode(NeutralMode.Brake);
 
-    motorStartUp(intakeExternal);
+    motorConfig(intakeExternal);
     intakeExternal.config_kF(0, 0, 30);
     intakeExternal.config_kP(0, 1, 30);
     intakeExternal.config_kI(0, 0.005, 30);
@@ -143,17 +205,10 @@ public class Robot extends TimedRobot {
     intakeExternal.configMotionCruiseVelocity(20000, 30);
     intakeExternal.configMotionAcceleration(6000, 30);
     intakeExternal.setNeutralMode(NeutralMode.Brake);
-
-    timer.start();
-    timer.reset(); // sets the timer to 0
-    gyro.calibrate(); // sets the gyro angle to 0 based on the current robot position
-    CameraServer.startAutomaticCapture(); // starts the webcam stream
-
-    updateVariables();
   }
 
   // runs manufacturer recommended startup commands for Falcon 500 motors. Should be run at startup for all motors.
-  public void motorStartUp(WPI_TalonFX motor) {
+  public void motorConfig(WPI_TalonFX motor) {
     motor.configFactoryDefault();
     motor.configSelectedFeedbackSensor(TalonFXFeedbackDevice.IntegratedSensor, 0 , 30);
     motor.configNeutralDeadband(0.01, 30);
@@ -186,6 +241,12 @@ public class Robot extends TimedRobot {
     positionExternalIntake = intakeExternal.getSelectedSensorPosition(0);
     time = timer.get();
     angle = gyro.getGyroAngleZ();
+
+    odometry.update(new Rotation2d(angle*Math.PI/180), positionLeft/encoderTicksPerMeter, positionRight/encoderTicksPerMeter);
+    Pose2d robotPosition = odometry.getPoseMeters();
+    robotX = robotPosition.getX();
+    robotY = robotPosition.getY();
+    positionAverage = (positionLeft + positionRight) / 2;
     
     // publishes updated variables to the dashboard
     SmartDashboard.putNumber("leftStickY", leftStickY);
@@ -195,11 +256,14 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("rightTrigger", rightTrigger);
     SmartDashboard.putNumber("leftTrigger", leftTrigger);
     SmartDashboard.putNumber("Encoder (Left)", positionLeft);
+    SmartDashboard.putNumber("Encoder (Average)", positionAverage);
     SmartDashboard.putNumber("Encoder (Right)", positionRight);
     SmartDashboard.putNumber("Encoder (Belt)", positionBelt);
     SmartDashboard.putNumber("Encoder (External Intake)", positionExternalIntake);
     SmartDashboard.putNumber("Encoder (Internal Intake)", positionInternalIntake);
     SmartDashboard.putNumber("Clock",  time);
     SmartDashboard.putNumber("Angle", angle);
+    SmartDashboard.putNumber("robotX", robotX);
+    SmartDashboard.putNumber("robotY",  robotY);
   }
 }
