@@ -26,13 +26,14 @@ public class Robot extends TimedRobot {
   XboxController controller = new XboxController(0);
   Timer timer = new Timer(); 
   ADIS16448_IMU gyro = new ADIS16448_IMU(); // RoboRIO-mounted gyroscope
-  DifferentialDriveOdometry odometry;
+  DifferentialDriveOdometry odometry = new DifferentialDriveOdometry(new Rotation2d(0), 0,0);
   double encoderTicksPerMeter = 44000;
-  PIDController positionControl = new PIDController(0, 0, 0);
-  PIDController angleControl = new PIDController(0, 0, 0);
+  PIDController positionControl = new PIDController(0.00004, 0.0001, 0.00001);
+  PIDController angleControl = new PIDController(0.04, 0.1, 0.01);
   double desiredRobotPosition = 0;
   double desiredRobotAngle = 0;
   int autoStage = 1;
+  int settleIterations = 0;
   // controller inputs
   double leftStickY;
   double leftStickX;
@@ -62,9 +63,6 @@ public class Robot extends TimedRobot {
     gyro.calibrate(); // sets the gyro angle to 0 based on the current robot position
     CameraServer.startAutomaticCapture(); // starts the webcam stream
     updateVariables();
-    odometry = new DifferentialDriveOdometry(new Rotation2d(angle*Math.PI/180), positionLeft, positionRight);
-    positionControl.setTolerance(100);
-    angleControl.setTolerance(2);
   }
 
   @Override
@@ -79,46 +77,64 @@ public class Robot extends TimedRobot {
   @Override
   public void autonomousPeriodic() {
     updateVariables();
-
     if (autoStage > 4) {
       autoStage = 1;
-    } 
+    }
 
     if (autoStage == 1) {
-      desiredRobotPosition = positionAverage + encoderTicksPerMeter;
-      moveToPosition(desiredRobotPosition);
+      desiredRobotPosition = positionAverage + 1*encoderTicksPerMeter;
+      moveToPosition(desiredRobotPosition, 0.4, 0.2*encoderTicksPerMeter);
       autoStage++;
     } 
-    
     else if (autoStage == 2) {
-      moveToPosition(desiredRobotPosition);
-      if (positionControl.atSetpoint()) {
-        autoStage++;
+      moveToPosition(desiredRobotPosition, 0.4, 0.2*encoderTicksPerMeter);
+      if (Math.abs(positionAverage - desiredRobotPosition) < 1000) {
+        settleIterations++;
+        if (settleIterations > 10) {
+          settleIterations = 0;
+          autoStage++;
+        }
       }
-    } 
-    
+    }
+
     else if (autoStage == 3) {
-      desiredRobotAngle = desiredRobotAngle + 90;
-      rotateToAngle(desiredRobotAngle);
+      desiredRobotAngle = angle + 90;
+      rotateToAngle(desiredRobotAngle, 0.4, 10);
       autoStage++;
-    } 
-    
+    }
+
     else if (autoStage == 4) {
-      rotateToAngle(desiredRobotAngle);
-      if (angleControl.atSetpoint()) {
-        autoStage++;
+      rotateToAngle(desiredRobotAngle, 0.4, 10);
+      if (Math.abs(angle - desiredRobotAngle) < 2) {
+        settleIterations++;
+        if (settleIterations > 10) {
+          settleIterations = 0;
+          autoStage++;
+        }
       }
     }
   }
   
-  public void moveToPosition(double distance) {
-    double xSpeed = positionControl.calculate(positionAverage, desiredRobotPosition);
-    drive.arcadeDrive(xSpeed, 0);
+  public void moveToPosition(double desiredRobotPosition, double speed, double PIDThreshold) {
+    if (positionAverage - desiredRobotPosition > PIDThreshold) {
+      drive.arcadeDrive(-speed, 0);
+    } else if (positionAverage - desiredRobotPosition < -PIDThreshold) {
+      drive.arcadeDrive(speed, 0);
+    } else {
+      double xSpeed = positionControl.calculate(positionAverage, desiredRobotPosition);
+      drive.arcadeDrive(xSpeed, 0);
+    }
   }
 
-  public void rotateToAngle(double angle) {
-    double zRotation = angleControl.calculate(angle, desiredRobotAngle);
-    drive.arcadeDrive(0, zRotation);
+  public void rotateToAngle(double desiredRobotAngle, double speed, double PIDThreshold) {
+    if (angle - desiredRobotAngle > PIDThreshold) {
+      drive.arcadeDrive(0, speed);
+    } else if (angle - desiredRobotAngle < -PIDThreshold) {
+      drive.arcadeDrive(0, -speed);
+    } else {
+      double rotationSpeed = angleControl.calculate(angle, desiredRobotAngle);
+      drive.arcadeDrive(0, -rotationSpeed);
+    }
   }
 
   @Override
@@ -265,5 +281,8 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("Angle", angle);
     SmartDashboard.putNumber("robotX", robotX);
     SmartDashboard.putNumber("robotY",  robotY);
+    SmartDashboard.putNumber("desiredRobotPosition", desiredRobotPosition);
+    SmartDashboard.putNumber("desiredRobotAngle", desiredRobotAngle);
+    SmartDashboard.putNumber("Auto Stage", autoStage);
   }
 }
