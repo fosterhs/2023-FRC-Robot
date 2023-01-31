@@ -57,7 +57,7 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("Angle", angle);
    
     // runs the drive motors at 25% until the robot has traveled 1 meter
-    moveDistance(1, 0.25, positionLeft);
+    rotate(90, 0.25, angle);
   }
 
     // Move function unit for distance in meters; Bug - Moving two meters won't work because distance is not reset
