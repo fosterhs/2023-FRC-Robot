@@ -57,6 +57,7 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("Clock",  time);
     SmartDashboard.putNumber("Angle", angle);
    
+<<<<<<< HEAD
     // runs the drive motors at 25% power for 1 meter and turns the robot at 25% power for 90 degrees
     if (autoStage == 1)  {
     if (positionExternalIntake <= 45315.0 * 1) {
@@ -100,6 +101,29 @@ public class Robot extends TimedRobot {
     if (autoStage == 9)  {
       drive.arcadeDrive(0, 0);
     }}
+=======
+    // runs the drive motors at 25% until the robot has traveled 1 meter
+    rotate(90, 0.25, angle);
+  }
+
+    // Move function unit for distance in meters; Bug - Moving two meters won't work because distance is not reset
+  public void moveDistance(double distance, double speed, double position) {
+    if (position < 45315.0 * distance) {
+     drive.arcadeDrive(speed, 0);
+    } else {
+     drive.arcadeDrive(0,0);
+    }
+  }
+  
+  // Same bug as move function
+  public void rotate(double desiredAngle, double speed, double angle) {
+    if (angle < desiredAngle + 1) {
+     drive.arcadeDrive(0, speed);
+    } else {
+     drive.arcadeDrive(0,0);
+    }
+  }
+>>>>>>> 70ff2321584420c4b7f2d7ccf320887013a2f9cf
 
   @Override
   public void teleopInit() {
