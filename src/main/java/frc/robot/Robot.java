@@ -18,8 +18,8 @@ import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.wpilibj.Timer;
 
 public class Robot extends TimedRobot {
-  private final WPI_TalonFX m_rightMotor = new WPI_TalonFX(1); // Note - Creates a new motor, because the motor exists physically not digitally yet.
-  private final WPI_TalonFX m_leftMotor = new WPI_TalonFX(5); // Note - Creates another new motor
+  private final WPI_TalonFX m_rightMotor = new WPI_TalonFX(2); // Note - Creates a new motor, because the motor exists physically not digitally yet.
+  private final WPI_TalonFX m_leftMotor = new WPI_TalonFX(0); // Note - Creates another new motor
   private final DifferentialDrive m_robotDrive = new DifferentialDrive(m_leftMotor, m_rightMotor); // Note - Creates an instance of differential drive that takes in inputs of the left and right motors. */
   private final XboxController m_driverController = new XboxController(0); // Note - Creates an Xbox Controller object/instance
   // private ShuffleboardTab joystickValues = Shuffleboard.getTab("Joystick Values");
