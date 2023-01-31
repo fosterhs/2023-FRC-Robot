@@ -22,7 +22,8 @@ public class Robot extends TimedRobot {
   private final XboxController controller = new XboxController(0);
   private final Timer timer = new Timer(); 
   private final ADIS16448_IMU gyro = new ADIS16448_IMU(); // RoboRIO-mounted gyroscope
-
+  int autoStage = 1;
+    
   @Override
   public void robotInit() {
     CameraServer.startAutomaticCapture(); // starts the webcam stream
@@ -56,13 +57,49 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("Clock",  time);
     SmartDashboard.putNumber("Angle", angle);
    
-    // runs the drive motors at 25% until the robot has traveled 1 meter
-    if (angle < 89) {
-      drive.arcadeDrive(0,-0.25);
-    } else {
-      drive.arcadeDrive(0,0);
-    }
-  }
+    // runs the drive motors at 25% power for 1 meter and turns the robot at 25% power for 90 degrees
+    if (autoStage == 1)  {
+    if (positionExternalIntake <= 45315.0 * 1) {
+      drive.arcadeDrive(0.25, 0);
+      autoStage ++;
+    }}
+    if (autoStage == 2)  {
+    if (angle <= 90) {
+        drive.arcadeDrive(0, 0.25);
+      autoStage ++;
+    }}
+    if (autoStage == 3)  {
+    if (positionExternalIntake <= 45315.0 * 2) {
+      drive.arcadeDrive(0.25, 0);
+      autoStage ++;
+    }}
+    if (autoStage == 4)  {
+    if (angle <= 180) {
+      drive.arcadeDrive(0, 0.25);
+      autoStage ++;
+    }}
+    if (autoStage == 5)  {
+    if (positionExternalIntake <= 45315.0 * 3) {
+      drive.arcadeDrive(0.25, 0);
+      autoStage ++;
+    }}
+    if (autoStage == 6)  {
+    if (angle <= 270) {
+      drive.arcadeDrive(0, 0.25);
+      autoStage ++;
+    }}
+    if (autoStage == 7)  {
+    if (positionExternalIntake <= 45315.0 * 4) {
+      drive.arcadeDrive(0.25, 0);
+      autoStage ++;
+    }}
+    if (autoStage == 8)  {
+    if (angle <= 360) {
+      drive.arcadeDrive(0, 0.25);
+    }}
+    if (autoStage == 9)  {
+      drive.arcadeDrive(0, 0);
+    }}
 
   @Override
   public void teleopInit() {
