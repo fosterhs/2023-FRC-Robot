@@ -56,7 +56,7 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("Clock",  time);
     SmartDashboard.putNumber("Angle", angle);
    
-    // runs the drive motors at 25% until the robot has traveled 1 meter
+    // rotates the robot 90 degrees
     rotate(90, 0.25, angle);
   }
 
@@ -69,9 +69,9 @@ public class Robot extends TimedRobot {
     }
   }
   
-  // Same bug as move function
+  // Same bug as move function; doesn't stop at -90 degrees-temporary fix using absolute values
   public void rotate(double desiredAngle, double speed, double angle) {
-    if (angle < desiredAngle + 1) {
+    if (Math.abs(angle) < Math.abs(desiredAngle) + 1) {
      drive.arcadeDrive(0, speed);
     } else {
      drive.arcadeDrive(0,0);
