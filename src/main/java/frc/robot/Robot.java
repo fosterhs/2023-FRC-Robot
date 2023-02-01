@@ -57,51 +57,7 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("Clock",  time);
     SmartDashboard.putNumber("Angle", angle);
 
-    // runs the drive motors at 25% power for 1 meter and turns the robot at 25% power for 90 degrees
-    if (autoStage == 1)  {
-    if (positionExternalIntake <= 45315.0 * 1) {
-      drive.arcadeDrive(0.25, 0);
-      autoStage ++;
-    }}
-    if (autoStage == 2)  {
-    if (angle <= 90) {
-        drive.arcadeDrive(0, 0.25);
-      autoStage ++;
-    }}
-    if (autoStage == 3)  {
-    if (positionExternalIntake <= 45315.0 * 2) {
-      drive.arcadeDrive(0.25, 0);
-      autoStage ++;
-    }}
-    if (autoStage == 4)  {
-    if (angle <= 180) {
-      drive.arcadeDrive(0, 0.25);
-      autoStage ++;
-    }}
-    if (autoStage == 5)  {
-    if (positionExternalIntake <= 45315.0 * 3) {
-      drive.arcadeDrive(0.25, 0);
-      autoStage ++;
-    }}
-    if (autoStage == 6)  {
-    if (angle <= 270) {
-      drive.arcadeDrive(0, 0.25);
-      autoStage ++;
-    }}
-    if (autoStage == 7)  {
-    if (positionExternalIntake <= 45315.0 * 4) {
-      drive.arcadeDrive(0.25, 0);
-      autoStage ++;
-    }}
-    if (autoStage == 8)  {
-    if (angle <= 360) {
-      drive.arcadeDrive(0, 0.25);
-    }}
-    if (autoStage == 9)  {
-      drive.arcadeDrive(0, 0);
-    }
-
-    
+    rotate(90, 0.25, angle);
   }
 
     // Move function unit for distance in meters; Bug - Moving two meters won't work because distance is not reset
@@ -120,8 +76,6 @@ public class Robot extends TimedRobot {
     } else {
      drive.arcadeDrive(0,0);
     }
-
-    rotate(90, 0.25, angle);
   }
 
   @Override
