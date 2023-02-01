@@ -61,7 +61,8 @@ public class Robot extends TimedRobot {
     if (autoStage == 1)  {
       drive.arcadeDrive(0.25, 0);
     }
-    if (positionExternalIntake >= 45315.0 && autoStage == 1) {
+    if 
+    ((positionLeft + positionRight) / 2 >= 45315.0 && autoStage == 1) {
       autoStage ++;
     }
     if (autoStage == 2)  {
@@ -73,7 +74,7 @@ public class Robot extends TimedRobot {
     if (autoStage == 3)  {
       drive.arcadeDrive(0.25, 0);
     }
-    if (positionExternalIntake >= 45315.0 * 2 && autoStage == 3) {
+    if ((positionLeft + positionRight) / 2 >= 45315.0 * 2 && autoStage == 3) {
       autoStage ++;
     }
     if (autoStage == 4)  {
@@ -85,7 +86,7 @@ public class Robot extends TimedRobot {
     if (autoStage == 5)  {
       drive.arcadeDrive(0.25, 0);
     }
-    if (positionExternalIntake >= 45315.0 * 3 && autoStage == 5) {
+    if ((positionLeft + positionRight) / 2 >= 45315.0 * 3 && autoStage == 5) {
       autoStage ++;
     }
     if (autoStage == 6)  {
@@ -97,7 +98,7 @@ public class Robot extends TimedRobot {
     if (autoStage == 7)  {
       drive.arcadeDrive(0.25, 0);
     }
-    if (positionExternalIntake >= 45315.0 * 4 && autoStage == 7) {
+    if ((positionLeft + positionRight) / 2 >= 45315.0 * 4 && autoStage == 7) {
       autoStage ++;
     }
     if (autoStage == 8)  {
