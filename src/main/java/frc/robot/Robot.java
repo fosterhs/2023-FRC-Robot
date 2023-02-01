@@ -1,28 +1,18 @@
 package frc.robot;
 
 import edu.wpi.first.cameraserver.CameraServer;
-<<<<<<< Updated upstream
-=======
-import edu.wpi.first.math.controller.ProfiledPIDController;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
-import edu.wpi.first.math.trajectory.TrapezoidProfile;
->>>>>>> Stashed changes
 import edu.wpi.first.wpilibj.ADIS16448_IMU;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.StatusFrameEnhanced;
 import com.ctre.phoenix.motorcontrol.TalonFXFeedbackDevice;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 
 public class Robot extends TimedRobot {
-<<<<<<< Updated upstream
   private final WPI_TalonFX left = new WPI_TalonFX(2); // left drive motor
   private final WPI_TalonFX right = new WPI_TalonFX(0); // right drive motor
   private final WPI_TalonFX belt = new WPI_TalonFX(1); // belt motor
@@ -32,24 +22,6 @@ public class Robot extends TimedRobot {
   private final XboxController controller = new XboxController(0);
   private final Timer timer = new Timer(); 
   private final ADIS16448_IMU gyro = new ADIS16448_IMU(); // RoboRIO-mounted gyroscope
-=======
-  WPI_TalonFX left = new WPI_TalonFX(2); // left drive motor
-  WPI_TalonFX right = new WPI_TalonFX(0); // right drive motor
-  WPI_TalonFX belt = new WPI_TalonFX(1); // belt motor
-  WPI_TalonFX intakeInternal = new WPI_TalonFX(3); // internal intake motor
-  WPI_TalonFX intakeExternal = new WPI_TalonFX(4); // external intake motor
-  DifferentialDrive drive = new DifferentialDrive(left, right);
-  XboxController controller = new XboxController(0);
-  Timer timer = new Timer(); 
-  ADIS16448_IMU gyro = new ADIS16448_IMU(); // RoboRIO-mounted gyroscope
-  DifferentialDriveOdometry odometry = new DifferentialDriveOdometry(new Rotation2d(0), 0,0);
-  double encoderTicksPerMeter = 44000;
-  ProfiledPIDController angleControl = new ProfiledPIDController(0.04, 0.1, 0.01, new TrapezoidProfile.Constraints(100,20));
-  double desiredRobotPosition = 0;
-  double desiredRobotAngle = 0;
-  int autoStage = 1;
-  int settleIterations = 0;
->>>>>>> Stashed changes
   // controller inputs
   double leftStickY;
   double leftStickX;
@@ -70,20 +42,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void robotInit() {
-<<<<<<< Updated upstream
     initialize();
-=======
-    initializeMotors();
-    timer.start();
-    timer.reset(); // sets the timer to 0
-    gyro.calibrate(); // sets the gyro angle to 0 based on the current robot position
-    CameraServer.startAutomaticCapture(); // starts the webcam stream
-    updateVariables();
-    angleControl.setIntegratorRange(1, -1);
-    angleControl.setTolerance(1);
-    angleControl.enableContinuousInput(0, 360);
-
->>>>>>> Stashed changes
   }
 
   @Override
@@ -97,32 +56,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void autonomousPeriodic() {
-<<<<<<< Updated upstream
     updateVariables();
-=======
-    updateVariables();  
-  }
-
-  public double getJoystickTheta(double x, double y) {
-    double JoystickTheta;
-    if (x != 0) {
-      JoystickTheta = Math.atan(y/x)*180/Math.PI;
-      if (x < 0) {
-        JoystickTheta = 180 + JoystickTheta;    
-      } else if (y < 0) {
-          JoystickTheta = 360 + JoystickTheta;
-      }
-    } else if (y >= 0) {
-      JoystickTheta = 90;
-    } else {
-      JoystickTheta = 270;
-    }
-    return JoystickTheta;
-  }
-
-  public double getJoystickR(double x, double y) {
-    return Math.sqrt(x*x + y*y);
->>>>>>> Stashed changes
   }
 
   @Override
@@ -134,19 +68,9 @@ public class Robot extends TimedRobot {
   @Override
   public void teleopPeriodic() {
     updateVariables();
-    // rotation test block
-    if (getJoystickR(leftStickX, -leftStickY) > 0.5) {
-      desiredRobotAngle = getJoystickR(leftStickX, -leftStickY);
-    }
-    double rotationSpeed = angleControl.calculate(angle, new TrapezoidProfile.State(desiredRobotAngle, 0));
-    drive.arcadeDrive(0, rotationSpeed);
-
-    // position test block
-    left.set(ControlMode.MotionMagic, encoderTicksPerMeter*-rightStickY);
-    right.set(ControlMode.MotionMagic, encoderTicksPerMeter*-rightStickY);
-    drive.feed();
-
+    
     // sets motor speeds based on controller inputs
+    drive.arcadeDrive(-leftStickY, -leftStickX, true);
     belt.set(-rightTrigger);
     intakeExternal.set(leftTrigger);
     intakeInternal.set(leftTrigger);
@@ -261,17 +185,7 @@ public class Robot extends TimedRobot {
     positionInternalIntake = intakeInternal.getSelectedSensorPosition(0);
     positionExternalIntake = intakeExternal.getSelectedSensorPosition(0);
     time = timer.get();
-<<<<<<< Updated upstream
     angle = gyro.getGyroAngleZ();
-=======
-    angle = gyro.getGyroAngleZ() % 360;
-
-    odometry.update(new Rotation2d(angle*Math.PI/180), positionLeft/encoderTicksPerMeter, positionRight/encoderTicksPerMeter);
-    Pose2d robotPosition = odometry.getPoseMeters();
-    robotX = robotPosition.getX();
-    robotY = robotPosition.getY();
-    positionAverage = (positionLeft + positionRight) / 2;
->>>>>>> Stashed changes
     
     // publishes updated variables to the dashboard
     SmartDashboard.putNumber("leftStickY", leftStickY);
