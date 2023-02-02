@@ -22,7 +22,11 @@ public class Robot extends TimedRobot {
   private final XboxController controller = new XboxController(0);
   private final Timer timer = new Timer(); 
   private final ADIS16448_IMU gyro = new ADIS16448_IMU(); // RoboRIO-mounted gyroscope
-  int autoStage = 1;
+  // double desiredDistance;
+  // double desiredAngle;
+  double error;
+  // Create constant for encoderPos to meters
+
     
   @Override
   public void robotInit() {
@@ -42,6 +46,7 @@ public class Robot extends TimedRobot {
     // updates variables
     double positionLeft = left.getSelectedSensorPosition(0);
     double positionRight = right.getSelectedSensorPosition(0);
+    double positionAverage = (positionLeft + positionRight) / 2;
     double positionBelt = belt.getSelectedSensorPosition(0);
     double positionInternalIntake = intakeInternal.getSelectedSensorPosition(0);
     double positionExternalIntake = intakeExternal.getSelectedSensorPosition(0);
@@ -57,7 +62,7 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("Clock",  time);
     SmartDashboard.putNumber("Angle", angle);
 
-    rotate(90, 0.25, angle);
+    moveDistanceWithBraking(1, 0.5, 1, positionAverage);
   }
 
     // Move function unit for distance in meters; Bug - Moving two meters won't work because distance is not reset
@@ -69,13 +74,19 @@ public class Robot extends TimedRobot {
     }
   }
   
-  // Same bug as move function; doesn't stop at -90 degrees-temporary fix using absolute values
+  // Same bug as move function; doesn't stop at -90 degrees-temporary, fix using absolute values
   public void rotate(double desiredAngle, double speed, double angle) {
     if (Math.abs(angle) < Math.abs(desiredAngle) + 1) {
      drive.arcadeDrive(0, speed);
     } else {
      drive.arcadeDrive(0,0);
     }
+  }
+  
+  // Change variable to decelerationSpeed; Add average drive motor position
+  public void moveDistanceWithBraking(double distance, double speed, double dropoffSpeed, double position) {
+    error = distance * 45315.0 - position;
+    moveDistance(distance, dropoffSpeed / 45315.0 * error, position);
   }
 
   @Override
