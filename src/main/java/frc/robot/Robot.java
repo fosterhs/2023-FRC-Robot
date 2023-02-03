@@ -79,6 +79,10 @@ public class Robot extends TimedRobot {
     }
   }
 
+  /* public void errorDeaccel(double distance, double speed, double brake, double position) {
+    error = distance * 45315.0 - position;
+  } */
+
   /* public void turn (double desiredAngle, double speed, double angle) {
     if (angle < desiredAngle)
   } */
