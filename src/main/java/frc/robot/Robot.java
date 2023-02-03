@@ -5,18 +5,19 @@ import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 import com.ctre.phoenix.motorcontrol.TalonFXFeedbackDevice;
 
 import edu.wpi.first.cameraserver.CameraServer;
+import edu.wpi.first.wpilibj.ADIS16448_IMU;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.Timer;
 
-import edu.wpi.first.cscore.CvSink;
+/* import edu.wpi.first.cscore.CvSink;
 import edu.wpi.first.cscore.CvSource;
 import edu.wpi.first.cscore.UsbCamera;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
-import org.opencv.imgproc.Imgproc;
+import org.opencv.imgproc.Imgproc; */
 
 public class Robot extends TimedRobot {
   private final WPI_TalonFX m_rightMotor = new WPI_TalonFX(2); // Note - Creates a new motor, because the motor exists physically not digitally yet.
@@ -24,6 +25,7 @@ public class Robot extends TimedRobot {
   private final DifferentialDrive m_robotDrive = new DifferentialDrive(m_leftMotor, m_rightMotor); // Note - Creates an instance of differential drive that takes in inputs of the left and right motors. */
   private final XboxController m_driverController = new XboxController(0); // Note - Creates an Xbox Controller object/instance. 
   private final Timer elapsedTime = new Timer();
+  private final ADIS16448_IMU gyro = new ADIS16448_IMU();
   // Thread m_visionThread;
 
   @Override
@@ -55,6 +57,8 @@ public class Robot extends TimedRobot {
     double matchTime = elapsedTime.get();
     double positionLeft = m_leftMotor.getSelectedSensorPosition(0);
     double positionRight = m_rightMotor.getSelectedSensorPosition(0);
+    double angle = gyro.getGyroAngleZ();
+    double avgPosition = (positionLeft + positionRight)/2;
     SmartDashboard.putNumber("Match Time:", matchTime);
     /* if (matchTime < 4) {
       m_leftMotor.set(ControlMode.PercentOutput, 0.1);
@@ -62,8 +66,22 @@ public class Robot extends TimedRobot {
     } else if (matchTime > 4) {
       m_leftMotor.set(ControlMode.PercentOutput, 0);
       m_rightMotor.set(ControlMode.PercentOutput, 0);
-    } */
+    } */    
+
+    autoMove(1, 0.5, 1);
   }
+
+  public void autoMove(double distance, double speed, double endPosition) {
+    if (endPosition < (45315.0 * distance)) {
+      m_robotDrive.arcadeDrive(speed, 0);
+    } else {
+      m_robotDrive.arcadeDrive(0, 0);
+    }
+  }
+
+  /* public void turn (double desiredAngle, double speed, double angle) {
+    if (angle < desiredAngle)
+  } */
 
   @Override
   public void teleopInit() {
