@@ -29,7 +29,7 @@ public class Robot extends TimedRobot {
   Timer timer = new Timer(); 
   ADIS16448_IMU gyro = new ADIS16448_IMU(); // RoboRIO-mounted gyroscope
   DifferentialDriveOdometry odometry = new DifferentialDriveOdometry(new Rotation2d(0), 0,0);
-  ProfiledPIDController angleControl = new ProfiledPIDController(0.04, 0.1, 0.01, new TrapezoidProfile.Constraints(100,20));
+  ProfiledPIDController angleControl = new ProfiledPIDController(0.05, 0.18, 0.013, new TrapezoidProfile.Constraints(200,200));
   double encoderTicksPerMeter = 44000;
   double desiredRobotPosition = 0;
   double desiredRobotAngle = 0;
@@ -60,7 +60,7 @@ public class Robot extends TimedRobot {
     gyro.calibrate(); // sets the gyro angle to 0 based on the current robot position
     CameraServer.startAutomaticCapture(); // starts the webcam stream
     updateVariables();
-    angleControl.setIntegratorRange(1, -1);
+    angleControl.setIntegratorRange(-0.8, 0.8);
     angleControl.setTolerance(1);
     angleControl.enableContinuousInput(0, 360);
   }
@@ -88,18 +88,28 @@ public class Robot extends TimedRobot {
   @Override
   public void teleopPeriodic() {
     updateVariables();
-
-    if (getJoystickR(leftStickX, -leftStickY) > 0.1) {
-      desiredRobotAngle = getJoystickTheta(leftStickX, -leftStickY);
+    double JoystickTheta = getJoystickTheta(leftStickX, -leftStickY);
+    double JoystickR = getJoystickR(leftStickX, -leftStickY);
+    SmartDashboard.putNumber("JoystickR", JoystickR);
+    SmartDashboard.putNumber("JoystickTheta", JoystickTheta);
+    if (JoystickR > 0.1) {
+      desiredRobotAngle = JoystickTheta - 90;
+      if (desiredRobotAngle < 0) {
+        desiredRobotAngle = desiredRobotAngle + 360;
+      }
     }
-    double rotationSpeed = angleControl.calculate(angle, new TrapezoidProfile.State(desiredRobotAngle, 0));
-    drive.arcadeDrive(0, rotationSpeed);
 
+    double rotationSpeed = angleControl.calculate(-angle, new TrapezoidProfile.State(desiredRobotAngle, 0));
+    double error = angleControl.getPositionError();
+    SmartDashboard.putNumber("Error", error);
+    SmartDashboard.putNumber("RotationSpeed", rotationSpeed);
+    drive.arcadeDrive(0, rotationSpeed);
+/* 
     desiredRobotPosition = encoderTicksPerMeter*rightStickY;
     left.set(ControlMode.MotionMagic, desiredRobotPosition);
     right.set(ControlMode.MotionMagic, desiredRobotPosition);
     drive.feed();
-
+*/
     // sets motor speeds based on controller inputs
     // drive.arcadeDrive(-leftStickY, -leftStickX, true);
     belt.set(-rightTrigger);
