@@ -1,8 +1,6 @@
 package frc.robot;
 
 import edu.wpi.first.cameraserver.CameraServer;
-<<<<<<< Updated upstream
-=======
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.controller.RamseteController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
@@ -13,11 +11,8 @@ import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
 import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
 import edu.wpi.first.math.trajectory.Trajectory;
-import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrajectoryUtil;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
-import edu.wpi.first.math.trajectory.constraint.MaxVelocityConstraint;
->>>>>>> Stashed changes
 import edu.wpi.first.wpilibj.ADIS16448_IMU;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
@@ -26,31 +21,15 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-<<<<<<< Updated upstream
-=======
-
 import java.io.IOException;
 import java.nio.file.Path;
-
 import com.ctre.phoenix.motorcontrol.ControlMode;
->>>>>>> Stashed changes
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.StatusFrameEnhanced;
 import com.ctre.phoenix.motorcontrol.TalonFXFeedbackDevice;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 
 public class Robot extends TimedRobot {
-<<<<<<< Updated upstream
-  private final WPI_TalonFX left = new WPI_TalonFX(2); // left drive motor
-  private final WPI_TalonFX right = new WPI_TalonFX(0); // right drive motor
-  private final WPI_TalonFX belt = new WPI_TalonFX(1); // belt motor
-  private final WPI_TalonFX intakeInternal = new WPI_TalonFX(3); // internal intake motor
-  private final WPI_TalonFX intakeExternal = new WPI_TalonFX(4); // external intake motor
-  private final DifferentialDrive drive = new DifferentialDrive(left, right);
-  private final XboxController controller = new XboxController(0);
-  private final Timer timer = new Timer(); 
-  private final ADIS16448_IMU gyro = new ADIS16448_IMU(); // RoboRIO-mounted gyroscope
-=======
   WPI_TalonFX left = new WPI_TalonFX(2); // left drive motor
   WPI_TalonFX right = new WPI_TalonFX(0); // right drive motor
   WPI_TalonFX belt = new WPI_TalonFX(1); // belt motor
@@ -65,7 +44,6 @@ public class Robot extends TimedRobot {
   double encoderTicksPerMeter = 2048*10.71/(0.0254*6*Math.PI);
   double desiredRobotPosition = 0;
   double desiredRobotAngle = 0;
->>>>>>> Stashed changes
   // controller inputs
   double leftStickY;
   double leftStickX;
@@ -105,10 +83,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void robotInit() {
-<<<<<<< Updated upstream
     initialize();
-=======
-    initializeMotors();
     timer.start();
     timer.reset(); // sets the timer to 0
     gyro.calibrate(); // sets the gyro angle to 0 based on the current robot position
@@ -123,8 +98,6 @@ public class Robot extends TimedRobot {
    } catch (IOException ex) {
       DriverStation.reportError("Unable to open trajectory: " + trajectoryJSON, ex.getStackTrace());
    }
-
->>>>>>> Stashed changes
   }
 
   @Override
@@ -159,13 +132,8 @@ public class Robot extends TimedRobot {
   @Override
   public void teleopPeriodic() {
     updateVariables();
-<<<<<<< Updated upstream
     
     // sets motor speeds based on controller inputs
-=======
-
-
->>>>>>> Stashed changes
     drive.arcadeDrive(-leftStickY, -leftStickX, true);
     belt.set(-rightTrigger);
     intakeExternal.set(leftTrigger);
