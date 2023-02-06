@@ -1,6 +1,9 @@
 package frc.robot;
 
 import edu.wpi.first.cameraserver.CameraServer;
+import edu.wpi.first.cscore.CvSink;
+import edu.wpi.first.cscore.CvSource;
+import edu.wpi.first.cscore.UsbCamera;
 import edu.wpi.first.math.controller.RamseteController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -20,6 +23,12 @@ import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import java.io.IOException;
 import java.nio.file.Path;
+
+import org.opencv.core.Mat;
+import org.opencv.core.Point;
+import org.opencv.core.Scalar;
+import org.opencv.imgproc.Imgproc;
+
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.StatusFrameEnhanced;
@@ -61,14 +70,14 @@ public class Robot extends TimedRobot {
   double robotX;
   double robotY;
   double angle; // gyro angle
-  
+  Thread vision;
+
   @Override
   public void robotInit() {
     initialize();
     timer.start();
     timer.reset(); // sets the timer to 0
-    gyro.calibrate(); // sets the gyro angle to 0 based on the current robot position
-    CameraServer.startAutomaticCapture(); // starts the webcam stream
+    gyro.calibrate(); // sets the gyro angle to 0 based on the current robot position 
     updateVariables();
     String trajectoryJSON = "paths/Test.wpilib.json";
     try {
@@ -77,6 +86,25 @@ public class Robot extends TimedRobot {
    } catch (IOException ex) {
       DriverStation.reportError("Unable to open trajectory: " + trajectoryJSON, ex.getStackTrace());
    }
+   vision = new Thread(
+    () -> {
+      UsbCamera camera = CameraServer.startAutomaticCapture();
+      camera.setResolution(640, 480);
+      CvSink sink = CameraServer.getVideo();
+      CvSource output = CameraServer.putVideo("Test", 640, 480);
+      Mat mat = new Mat();
+      while (!Thread.interrupted()) {
+        if (sink.grabFrame(mat) == 0) {
+          output.notifyError(sink.getError());
+          continue;
+        }
+        Imgproc.rectangle(mat, new Point(300,220), new Point(340,260), new Scalar(255,255,255),5);
+        output.putFrame(mat);
+      }
+    }
+   );
+   vision.setDaemon(true);
+   vision.start();
   }
 
   @Override
@@ -188,7 +216,6 @@ public class Robot extends TimedRobot {
     timer.start();
     timer.reset(); // sets the timer to 0
     gyro.calibrate(); // sets the gyro angle to 0 based on the current robot position
-    CameraServer.startAutomaticCapture(); // starts the webcam stream
 
     updateVariables();
   }
