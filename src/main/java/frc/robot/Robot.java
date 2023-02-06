@@ -68,7 +68,8 @@ public class Robot extends TimedRobot {
     from the encoders we've established that gets the sensor's selected position. We use this to represent how much the motors have currently traveled, and by subtracting that from 
     the endPoint, you get how much you have left to travel, which is the error variable. By plugging in the error variable into the arcadeDrive function, as the avgPosition increases 
     while driving, the lower the difference. Such as 5-1=4, when 1 increases to 2, you have 5-2=3. This proportionate decrease in your distance to travel is how slow the robot down 
-    as it reaches 1 meter. We plug this value in for xSpeed to tell the roboRio to move the robot forward 1 meter. */
+    as it reaches 1 meter. We plug this value in for xSpeed to tell the roboRio to move the robot forward 1 meter. 0.5 is the constant that tells us how much percent of the motors it
+    should be. Here, it should be 50% at all times of the error value, whatever it may be.*/
     /* Note 2: The encoder records the motor rotations in different units. One full rotation of the motors recorded by the encoders is 2048. We've calculated that 45315.0 is the 1
     meter in encoder units. avgPosition essentially is the average of the 2 variables, positionLeft and positionRight. Those variables are basically giving us the current value of 
     encoders at any moment, through functions that gets the selected sensor position in raw units. Since avgPosition is set to equal raw sensor units, by dividing by 45315.0, it'll
