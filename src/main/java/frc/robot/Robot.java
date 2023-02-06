@@ -26,6 +26,8 @@ public class Robot extends TimedRobot {
   private final XboxController m_driverController = new XboxController(0); // Note - Creates an Xbox Controller object/instance. 
   private final Timer elapsedTime = new Timer();
   private final ADIS16448_IMU gyro = new ADIS16448_IMU();
+  double endPoint = 1.0;
+  double error;
   // Thread m_visionThread;
 
   @Override
@@ -60,32 +62,22 @@ public class Robot extends TimedRobot {
     double angle = gyro.getGyroAngleZ();
     double avgPosition = (positionLeft + positionRight)/2;
     SmartDashboard.putNumber("Match Time:", matchTime);
-    /* if (matchTime < 4) {
-      m_leftMotor.set(ControlMode.PercentOutput, 0.1);
-      m_rightMotor.set(ControlMode.PercentOutput, -0.1);
-    } else if (matchTime > 4) {
-      m_leftMotor.set(ControlMode.PercentOutput, 0);
-      m_rightMotor.set(ControlMode.PercentOutput, 0);
-    } */    
 
-    autoMove(1, 0.5, 1);
+    /* Note: The way this piece of code works is that you set an endpoint that represents the total distance the robot is meant to travel in autonomous. For example I've set it to 1.0, 
+    representing 1 meter. Then we subtract that by the avgPosition. The avgPosition is the average of the total distance traveled by the motors recorded. We receive this information 
+    from the encoders we've established that gets the sensor's selected position. We use this to represent how much the motors have currently traveled, and by subtracting that from 
+    the endPoint, you get how much you have left to travel, which is the error variable. By plugging in the error variable into the arcadeDrive function, as the avgPosition increases 
+    while driving, the lower the difference. Such as 5-1=4, when 1 increases to 2, you have 5-2=3. This proportionate decrease in your distance to travel is how slow the robot down 
+    as it reaches 1 meter. We plug this value in for xSpeed to tell the roboRio to move the robot forward 1 meter. */
+    /* Note 2: The encoder records the motor rotations in different units. One full rotation of the motors recorded by the encoders is 2048. We've calculated that 45315.0 is the 1
+    meter in encoder units. avgPosition essentially is the average of the 2 variables, positionLeft and positionRight. Those variables are basically giving us the current value of 
+    encoders at any moment, through functions that gets the selected sensor position in raw units. Since avgPosition is set to equal raw sensor units, by dividing by 45315.0, it'll
+    convert the units into meters. Say for example we have exactly 1 meter left to travel. 1 meter will equal 45315.0, so dividing that by itself will get 1. That will proportinately
+    work for any other values lower than 1. We do this because arcadeDrive takes in values from -1, 0, and positive 1, so by dividing by 45315, not only can arcadeDrive actually
+    read what we're feeding it, but we can convert the units to meters.*/
+    error = endPoint - (avgPosition/45315.0); 
+    m_robotDrive.arcadeDrive(error*0.5, 0);
   }
-
-  public void autoMove(double distance, double speed, double endPosition) {
-    if (endPosition < (45315.0 * distance)) {
-      m_robotDrive.arcadeDrive(speed, 0);
-    } else {
-      m_robotDrive.arcadeDrive(0, 0);
-    }
-  }
-
-  /* public void errorDeaccel(double distance, double speed, double brake, double position) {
-    error = distance * 45315.0 - position;
-  } */
-
-  /* public void turn (double desiredAngle, double speed, double angle) {
-    if (angle < desiredAngle)
-  } */
 
   @Override
   public void teleopInit() {
