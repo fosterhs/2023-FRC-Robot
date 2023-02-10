@@ -28,14 +28,14 @@ sizePub = table.getDoubleArrayTopic("Size").publish() # Creates a topic called "
 
 # Initializes the camera and begins streaming video to Network Tables.
 camera = CameraServer.startAutomaticCapture() # USB Camera object.
-camera.setResolution(320,240) #lower resolutions are faster to process
+camera.setResolution(160,120) #lower resolutions are faster to process
 camera.setFPS(30) #30 is the max
 camera.setExposureManual(25) #Range 0-100. Sets how much light makes it to the sensor.
 
 
 sink = CameraServer.getVideo() # CvSink object. Frames from the camera are sent here to be processed.
-source = CameraServer.putVideo("Vision Output", 320, 240) # CvSource object. Output frames from CV are sent here to be uploaded to Network Tables.
-img_in = numpy.zeros(shape=(320,240,3),dtype=numpy.uint8) # creates a 3D array size 320 x 240 x 3. Each element is an unsigned 8 bit integer (0-255). Value initialized to 0.
+source = CameraServer.putVideo("Vision Output", 160, 120) # CvSource object. Output frames from CV are sent here to be uploaded to Network Tables.
+img_in = numpy.zeros(shape=(160,120,3),dtype=numpy.uint8) # creates a 3D array size 320 x 240 x 3. Each element is an unsigned 8 bit integer (0-255). Value initialized to 0.
 img_out = numpy.copy(img_in) # Creates another array for the output image.
 
 # Initializes frame and start time variables to be published to Network Tables.
@@ -52,15 +52,9 @@ class GripPipeline:
         """initializes all values to presets or None if need to be set
         """
 
-        self.__blur_type = BlurType.Gaussian_Blur
-        self.__blur_radius = 5.405405405405405
-
-        self.blur_output = None
-
-        self.__hsv_threshold_input = self.blur_output
-        self.__hsv_threshold_hue = [155.3956834532374, 170.78498293515355]
-        self.__hsv_threshold_saturation = [73.38129496402877, 183.1996587030717]
-        self.__hsv_threshold_value = [178.86690647482015, 255.0]
+        self.__hsv_threshold_hue = [144.06474820143885, 180.0]
+        self.__hsv_threshold_saturation = [61.915467625899275, 255.0]
+        self.__hsv_threshold_value = [176.57374100719426, 255.0]
 
         self.hsv_threshold_output = None
 
@@ -76,40 +70,14 @@ class GripPipeline:
         """
         Runs the pipeline and sets all outputs to new values.
         """
-        # Step Blur0:
-        self.__blur_input = source0
-        (self.blur_output) = self.__blur(self.__blur_input, self.__blur_type, self.__blur_radius)
-
         # Step HSV_Threshold0:
-        self.__hsv_threshold_input = self.blur_output
+        self.__hsv_threshold_input = source0
         (self.hsv_threshold_output) = self.__hsv_threshold(self.__hsv_threshold_input, self.__hsv_threshold_hue, self.__hsv_threshold_saturation, self.__hsv_threshold_value)
 
         # Step Find_Blobs0:
         self.__find_blobs_input = self.hsv_threshold_output
         (self.find_blobs_output) = self.__find_blobs(self.__find_blobs_input, self.__find_blobs_min_area, self.__find_blobs_circularity, self.__find_blobs_dark_blobs)
 
-
-    @staticmethod
-    def __blur(src, type, radius):
-        """Softens an image using one of several filters.
-        Args:
-            src: The source mat (numpy.ndarray).
-            type: The blurType to perform represented as an int.
-            radius: The radius for the blur as a float.
-        Returns:
-            A numpy.ndarray that has been blurred.
-        """
-        if(type is BlurType.Box_Blur):
-            ksize = int(2 * round(radius) + 1)
-            return cv2.blur(src, (ksize, ksize))
-        elif(type is BlurType.Gaussian_Blur):
-            ksize = int(6 * round(radius) + 1)
-            return cv2.GaussianBlur(src, (ksize, ksize), round(radius))
-        elif(type is BlurType.Median_Filter):
-            ksize = int(2 * round(radius) + 1)
-            return cv2.medianBlur(src, ksize)
-        else:
-            return cv2.bilateralFilter(src, -1, round(radius), round(radius))
 
     @staticmethod
     def __hsv_threshold(input, hue, sat, val):
@@ -150,9 +118,6 @@ class GripPipeline:
         params.filterByInertia = False
         detector = cv2.SimpleBlobDetector_create(params)
         return detector.detect(input)
-
-
-BlurType = Enum('BlurType', 'Box_Blur Gaussian_Blur Median_Filter Bilateral_Filter')
 
 # Creates a GripPipeline object using the uploaded grip.py code.
 pipeline = GripPipeline()
