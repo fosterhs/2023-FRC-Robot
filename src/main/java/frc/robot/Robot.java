@@ -84,7 +84,7 @@ public class Robot extends TimedRobot {
   }
   
   // Change variable to decelerationSpeed; Add average drive motor position
-  public void moveDistanceWithBraking(double distance, double speed, double dropoffSpeed, double position) {
+  public void moveDistanceWithBraking(double distance, double speed, double dropoffSpeed, double position) { // Get a better function name
     error = distance * 45315.0 - position;
     moveDistance(distance, dropoffSpeed / 45315.0 * error, position);
   }
