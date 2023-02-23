@@ -1,3 +1,4 @@
+// Erik's Main Code Document
 package frc.robot;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
@@ -5,6 +6,7 @@ import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 import com.ctre.phoenix.motorcontrol.TalonFXFeedbackDevice;
 
 import edu.wpi.first.cameraserver.CameraServer;
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.ADIS16448_IMU;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.XboxController;
@@ -28,6 +30,7 @@ public class Robot extends TimedRobot {
   private final ADIS16448_IMU gyro = new ADIS16448_IMU();
   double endPoint = 1.0;
   double error;
+  PIDController pid = new PIDController(0.5, 0, 0);
   // Thread m_visionThread;
 
   @Override
@@ -77,7 +80,11 @@ public class Robot extends TimedRobot {
     work for any other values lower than 1. We do this because arcadeDrive takes in values from -1, 0, and positive 1, so by dividing by 45315, not only can arcadeDrive actually
     read what we're feeding it, but we can convert the units to meters.*/
     error = endPoint - (avgPosition/45315.0); 
-    m_robotDrive.arcadeDrive(error*0.5, 0);
+    
+    double pidError = pid.calculate(avgPosition/45315.0, endPoint);
+    m_robotDrive.arcadeDrive(pidError, 0);
+
+   
   }
 
   @Override
