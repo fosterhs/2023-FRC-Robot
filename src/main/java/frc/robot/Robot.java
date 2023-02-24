@@ -74,7 +74,7 @@ public class Robot extends TimedRobot {
   @Override
   public void autonomousPeriodic() {
     updateVariables();
-    drive.arcadeDrive(speedController.calculate((positionLeft + positionRight) / 2 / encoderTicksPerMeter, 1), 0);
+    drive.arcadeDrive(speedController.calculate((positionLeft + positionRight) / 2, 1), 0);
   }
 
   @Override
