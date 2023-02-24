@@ -90,7 +90,7 @@ public class Robot extends TimedRobot {
     updateVariables();
     
     // sets motor speeds based on controller inputs
-    drive.arcadeDrive(-leftStickY, -rightStickX, true);
+    drive.arcadeDrive(speedController.calculate((positionLeft + positionRight) / 2, -leftStickY), 0);
     belt.set(-rightTrigger);
     intakeExternal.set(leftTrigger);
     intakeInternal.set(leftTrigger);
