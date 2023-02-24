@@ -59,6 +59,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void autonomousPeriodic() {
+<<<<<<< Updated upstream
     double matchTime = elapsedTime.get();
     double positionLeft = m_leftMotor.getSelectedSensorPosition(0);
     double positionRight = m_rightMotor.getSelectedSensorPosition(0);
@@ -85,6 +86,14 @@ public class Robot extends TimedRobot {
     m_robotDrive.arcadeDrive(pidError, 0);
 
    
+=======
+    updateVariables();
+    drive.feed();
+    timer.reset(); // sets the timer to 0
+    left.setNeutralMode(NeutralMode.Brake);
+    right.setNeutralMode(NeutralMode.Brake);
+    updateVariables(); // updates and publishes variables to shuffleboard
+>>>>>>> Stashed changes
   }
 
   @Override
