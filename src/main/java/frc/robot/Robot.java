@@ -1,6 +1,6 @@
 package frc.robot;
 
-import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
@@ -16,7 +16,7 @@ import com.ctre.phoenix.motorcontrol.TalonFXFeedbackDevice;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 
 public class Robot extends TimedRobot {
-  PIDController speedController = new PIDController(1, 0, 0);
+  SlewRateLimiter slewController = new SlewRateLimiter(0.65);
   WPI_TalonFX left = new WPI_TalonFX(2); // left drive motor
   WPI_TalonFX right = new WPI_TalonFX(0); // right drive motor
   WPI_TalonFX belt = new WPI_TalonFX(1); // belt motor
@@ -74,7 +74,7 @@ public class Robot extends TimedRobot {
   @Override
   public void autonomousPeriodic() {
     updateVariables();
-    drive.arcadeDrive(speedController.calculate((positionLeft + positionRight) / 2, 1), 0);
+    drive.arcadeDrive(slewController.calculate(0.8), -rightStickX, true);
   }
 
   @Override
@@ -90,7 +90,7 @@ public class Robot extends TimedRobot {
     updateVariables();
     
     // sets motor speeds based on controller inputs
-    drive.arcadeDrive(speedController.calculate((positionLeft + positionRight) / 2, -leftStickY), 0);
+    drive.arcadeDrive(slewController.calculate(-leftStickY), -rightStickX, true);
     belt.set(-rightTrigger);
     intakeExternal.set(leftTrigger);
     intakeInternal.set(leftTrigger);
