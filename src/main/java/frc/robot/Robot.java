@@ -41,7 +41,6 @@ public class Robot extends TimedRobot {
   // motor encoder values
   double positionLeft; 
   double positionRight;
-  double positionAverage = (positionLeft+positionRight)/2;
   double positionBelt;
   double positionInternalIntake;
   double positionExternalIntake;
@@ -52,7 +51,6 @@ public class Robot extends TimedRobot {
   double robotY;
   double angle; // gyro angle
   double distance = 3; // Another way to say endpoint
-  double error = distance-(positionAverage/45315.0);
 
   private WPI_TalonFX leftMotor = new WPI_TalonFX(0);
   private WPI_TalonFX rightMotor = new WPI_TalonFX(2);
@@ -101,6 +99,8 @@ public class Robot extends TimedRobot {
     rightMotor.getSelectedSensorPosition();
     positionLeft = leftMotor.getSelectedSensorPosition(0);
     positionRight = rightMotor.getSelectedSensorPosition(0);
+    double positionAverage = (positionLeft+positionRight)/2;
+    double error = distance-(positionAverage/45315.0);
     drive.arcadeDrive(0.1*error,0);
 
     /* if (time - startTime < 3) {
