@@ -3,13 +3,16 @@ package frc.robot;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
-import edu.wpi.first.net.PortForwarder;
 import edu.wpi.first.wpilibj.ADIS16448_IMU;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
+import edu.wpi.first.wpilibj.motorcontrol.Spark;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+
+import javax.lang.model.util.ElementScanner14;
+
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.StatusFrameEnhanced;
 import com.ctre.phoenix.motorcontrol.TalonFXFeedbackDevice;
@@ -36,8 +39,9 @@ public class Robot extends TimedRobot {
   double leftTrigger;
   double rightTrigger;
   // motor encoder values
-  double positionLeft;
+  double positionLeft; 
   double positionRight;
+  double positionAverage = (positionLeft+positionRight)/2;
   double positionBelt;
   double positionInternalIntake;
   double positionExternalIntake;
@@ -47,21 +51,30 @@ public class Robot extends TimedRobot {
   double robotX;
   double robotY;
   double angle; // gyro angle
+  double distance = 3; // Another way to say endpoint
+  double error = distance-(positionAverage/45315.0);
 
+  private WPI_TalonFX leftMotor = new WPI_TalonFX(0);
+  private WPI_TalonFX rightMotor = new WPI_TalonFX(2);
+
+  
   @Override
   public void robotInit() {
-    PortForwarder.add(8888, "wpilibpi.local", 80);
     initializeMotors(); // starts and configures the motors
     timer.start(); // starts the timer at 0s.
     gyro.calibrate(); // sets the gyro angle to 0 based on the current robot position 
     updateVariables(); // updates and publishes variables to shuffleboard
   }
 
+  private double startTime;
+
   @Override
-  public void robotPeriodic() {}
+  public void robotPeriodic() {
+  }
 
   @Override
   public void autonomousInit() {
+    startTime = Timer.getFPGATimestamp(); 
     timer.reset(); // sets the timer to 0
     left.setNeutralMode(NeutralMode.Brake);
     right.setNeutralMode(NeutralMode.Brake);
@@ -69,14 +82,42 @@ public class Robot extends TimedRobot {
   }
 
   @Override
-  public void autonomousPeriodic() {
+  public void autonomousPeriodic() { // make the robot move by itself for a meter
     updateVariables();
-    drive.feed();
+    drive.arcadeDrive(error/distance, 0);
+    double time = Timer.getFPGATimestamp(); // Gets the time (in seconds)
+
+    /*if (time - startTime < 3) {
+    leftMotor.set(0.6);
+    rightMotor.set(-0.6);
+    } else {
+    leftMotor.set(0); // Stops the motors 
+    rightMotor.set(0);
+    int endpoint;
+    error = endpoint(positionAverage/45315.0);
+    } */
+
+    leftMotor.getSelectedSensorPosition();
+    rightMotor.getSelectedSensorPosition();
+    positionLeft = leftMotor.getSelectedSensorPosition(0);
+    positionRight = rightMotor.getSelectedSensorPosition(0);
+    drive.arcadeDrive(0.1*error,0);
+
+    /* if (time - startTime < 3) {
+      drive.arcadeDrive(0.6, time);
+      } else {
+        drive.arcadeDrive(0, 0);
+      } */ 
   }
 
+  public double endpoint(double d) {
+    return 0;
+  }
+
+  
   @Override
   public void teleopInit() {
-    timer.reset(); // sets the timer to 0
+    timer.reset(); //sets the timer to 0
     left.setNeutralMode(NeutralMode.Brake);
     right.setNeutralMode(NeutralMode.Brake);
     updateVariables();
