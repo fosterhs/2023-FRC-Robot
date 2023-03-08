@@ -18,7 +18,7 @@ import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 public class Robot extends TimedRobot {
   SlewRateLimiter slewSpeedController = new SlewRateLimiter(0.65);
   SlewRateLimiter slewRotationController = new SlewRateLimiter(60.0);
-  double maxRotationSpeed = 0.6;
+  double maxRotationSpeed = 0.55;
 
   WPI_TalonFX left = new WPI_TalonFX(2); // left drive motor
   WPI_TalonFX right = new WPI_TalonFX(0); // right drive motor
