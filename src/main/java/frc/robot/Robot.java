@@ -9,6 +9,8 @@ import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
+import edu.wpi.first.wpilibj.motorcontrol.MotorController;
+import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.StatusFrameEnhanced;
@@ -20,12 +22,14 @@ public class Robot extends TimedRobot {
   SlewRateLimiter slewRotationController = new SlewRateLimiter(60.0);
   double maxRotationSpeed = 0.55;
 
-  WPI_TalonFX left = new WPI_TalonFX(2); // left drive motor
-  WPI_TalonFX right = new WPI_TalonFX(0); // right drive motor
-  WPI_TalonFX belt = new WPI_TalonFX(1); // belt motor
-  WPI_TalonFX intakeInternal = new WPI_TalonFX(3); // internal intake motor
-  WPI_TalonFX intakeExternal = new WPI_TalonFX(4); // external intake motor
-  DifferentialDrive drive = new DifferentialDrive(left, right);
+  WPI_TalonFX rightFront = new WPI_TalonFX(4); // front right drive motor
+  WPI_TalonFX rightBack = new WPI_TalonFX(3); // back right drive motor
+  WPI_TalonFX leftFront = new WPI_TalonFX(2); // front left drive motor
+  WPI_TalonFX leftback = new WPI_TalonFX(1); // back left drive motor
+  WPI_TalonFX arm = new WPI_TalonFX(0); // arm motor
+  MotorControllerGroup motorGroupLeft = new MotorControllerGroup(leftFront, leftback);
+  MotorControllerGroup motorGroupRight = new MotorControllerGroup(rightFront, rightBack);
+  DifferentialDrive drive = new DifferentialDrive(motorGroupLeft, motorGroupRight);
   XboxController controller = new XboxController(0);
   ADIS16448_IMU gyro = new ADIS16448_IMU(); // RoboRIO-mounted gyroscope
   Timer timer = new Timer(); 
