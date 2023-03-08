@@ -17,7 +17,8 @@ import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 
 public class Robot extends TimedRobot {
   SlewRateLimiter slewSpeedController = new SlewRateLimiter(0.65);
-  SlewRateLimiter slewRotationController = new SlewRateLimiter(120.0);
+  SlewRateLimiter slewRotationController = new SlewRateLimiter(60.0);
+  double maxRotationSpeed = 0.6;
 
   WPI_TalonFX left = new WPI_TalonFX(2); // left drive motor
   WPI_TalonFX right = new WPI_TalonFX(0); // right drive motor
@@ -92,7 +93,16 @@ public class Robot extends TimedRobot {
     updateVariables();
     
     // sets motor speeds based on controller inputs
-    drive.arcadeDrive(slewSpeedController.calculate(-leftStickY), slewRotationController.calculate(-rightStickX), true);
+    double rotation = slewRotationController.calculate(-rightStickX);
+    if (rotation > maxRotationSpeed) {
+      rotation = maxRotationSpeed;
+    }
+    if (rotation < -maxRotationSpeed) {
+      rotation = -maxRotationSpeed;
+      }
+
+
+    drive.arcadeDrive(slewSpeedController.calculate(-leftStickY), rotation , true);
     belt.set(-rightTrigger);
     intakeExternal.set(leftTrigger);
     intakeInternal.set(leftTrigger);
