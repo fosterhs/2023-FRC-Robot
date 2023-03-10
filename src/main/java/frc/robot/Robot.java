@@ -106,7 +106,7 @@ public class Robot extends TimedRobot {
       }
 
 
-    drive.arcadeDrive(slewSpeedController.calculate(-leftStickY), rotation , true);
+    drive.arcadeDrive(-(leftStickY * leftStickY * leftStickY), rotation , true);
     belt.set(-rightTrigger);
     intakeExternal.set(leftTrigger);
     intakeInternal.set(leftTrigger);
